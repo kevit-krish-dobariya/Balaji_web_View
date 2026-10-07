@@ -55,7 +55,7 @@ export class OrderService {
   private retailerId: any;
   private dealerId: any;
   private retailerName = '';
-  private distributorName = '';
+  private dealerName = '';
 
   constructor(private readonly productApiService: ProductApiService) {
     this.init();
@@ -73,8 +73,8 @@ export class OrderService {
 
     const dealerId = sessionStorage.getItem('dealerId');
     const retailerId = sessionStorage.getItem('retailerId');
-    this.retailerName = sessionStorage.getItem('name') ?? '';
-    this.distributorName = sessionStorage.getItem('distributorName') ?? '';
+    this.retailerName = sessionStorage.getItem('retailerName') ?? '';
+    this.dealerName = sessionStorage.getItem('dealerName') ?? '';
     this.dealerId = dealerId;
     this.retailerId = retailerId;
     this._loading.next(true);
@@ -461,7 +461,7 @@ export class OrderService {
 
     return {
       name: this.retailerName,
-      distributorName: this.distributorName,
+      distributorName: this.dealerName,
       orderNumber,
       orderDate,
       contactNumber: sessionStorage.getItem('contactNumber') ?? '',
