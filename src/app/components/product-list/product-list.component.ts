@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
+import { AuthService } from '../../services/auth.service';
 import { ProductGroup } from '../../models/product-group.model';
 
 @Component({
@@ -21,10 +22,14 @@ export class ProductListComponent {
   constructor(
     public orderService: OrderService,
     private router: Router,
+    private authService: AuthService,
   ) {}
 
   showPreview(): void {
-    this.router.navigate(['/preview']);
+    const contactNumber = this.authService.contactNumber;
+    this.router.navigate(['/preview'], {
+      queryParams: contactNumber ? { contactNumber } : {},
+    });
   }
 
   groupTrackBy(_index: number, group: ProductGroup): string {

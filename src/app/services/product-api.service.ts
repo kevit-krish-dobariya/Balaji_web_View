@@ -28,6 +28,30 @@ export interface CreateOrderPayload {
   source: string;
 }
 
+export interface SubmitOrderResponse {
+  status: string;
+  order_Name: string;
+  order_ID: string;
+}
+
+export interface OrderAcknowledgementItem {
+  item_name: string;
+  box_qty: number;
+  patti_qty: number;
+  pkt_qty: number;
+  amount_inr: number;
+}
+
+export interface OrderAcknowledgementPayload {
+  name: string;
+  distributorName: string;
+  orderNumber: string;
+  orderDate: string;
+  contactNumber: string;
+  total_amount_inr: number;
+  items: OrderAcknowledgementItem[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductApiService {
   private readonly baseUrl = environment.apiUrl;
@@ -41,9 +65,18 @@ export class ProductApiService {
     );
   }
 
-  submitOrder(payload: CreateOrderPayload): Observable<unknown> {
-    return this.http.post<unknown>(
+  submitOrder(payload: CreateOrderPayload): Observable<SubmitOrderResponse> {
+    return this.http.post<SubmitOrderResponse>(
       `${this.baseUrl}/custom/balaji/order`,
+      payload,
+    );
+  }
+
+  generateOrderAcknowledgement(
+    payload: OrderAcknowledgementPayload,
+  ): Observable<unknown> {
+    return this.http.post<unknown>(
+      `${this.baseUrl}/custom/balaji/pdf/acknowledgement`,
       payload,
     );
   }

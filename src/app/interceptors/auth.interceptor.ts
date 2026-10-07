@@ -17,8 +17,11 @@ export class AuthInterceptor implements HttpInterceptor {
     if (!req.url.startsWith(environment.apiUrl)) {
       return next.handle(req);
     }
+    const token = req.url.includes('/custom/utility/decrypt-payload')
+      ? environment.decryptApiToken
+      : environment.apiToken;
     const authReq = req.clone({
-      setHeaders: { Authorization: environment.apiToken },
+      setHeaders: { Authorization: token },
     });
     return next.handle(authReq);
   }

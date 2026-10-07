@@ -224,6 +224,62 @@
   color: #fff;
 }
 
+/* Mode toggle sits flush, without the chip-style square background the
+   other header buttons/chips have. */
+.header-chips-row .btn-theme,
+.header-chips-row .btn-theme:hover,
+.header-chips-row .btn-theme:focus,
+.header-chips-row .btn-theme:focus-visible {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:host-context(.dark) .header-chips-row .btn-theme {
+  background: transparent;
+}
+
+.theme-toggle-track {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px;
+  box-sizing: border-box;
+  transition: background 0.2s ease;
+}
+
+.btn-theme.active .theme-toggle-track {
+  background: #1e3a5f;
+}
+
+.theme-toggle-icon {
+  font-size: 9px;
+  line-height: 1;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.btn-theme.active .theme-toggle-thumb {
+  transform: translateX(16px);
+}
+
 .search-wrapper {
   position: relative;
   display: flex;
@@ -381,9 +437,16 @@
 
 .segment-filter-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
-  padding: 0;
+  padding: 0 0 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.segment-filter-row::-webkit-scrollbar {
+  display: none;
 }
 
 .seg-btn {

@@ -48,6 +48,44 @@
   opacity: 0.4;
 }
 
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 0;
+  font-size: 14px;
+  color: #888;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+}
+
+:host-context(.dark) .preview-loading {
+  background: #1e1e1e;
+}
+
+.preview-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1565c0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+:host-context(.dark) .preview-spinner {
+  border-color: #333;
+  border-top-color: #90caf9;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .preview-empty {
   text-align: center;
   color: #aaa;

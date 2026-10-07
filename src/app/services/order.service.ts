@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { Product } from '../products.data';
 import { ProductGroup, OrderPreviewRow } from '../models/product-group.model';
 import {
   ProductApiService,
   CreateOrderPayload,
+  OrderAcknowledgementPayload,
   ProductsResponse,
+  SubmitOrderResponse,
 } from './product-api.service';
-import { environment } from '../../environments/environment';
 
 const STORAGE_KEY = 'balaji_order_quantities';
 const CART_KEY = 'balaji_cart_mode';
@@ -51,8 +52,10 @@ export class OrderService {
   allProducts: Product[] = [];
   private allGroups: ProductGroup[] = [];
   focusedProduct: Product | null = null;
-  private retailerId = environment.defaultRetailerId;
-  private dealerId = environment.defaultDealerId;
+  private retailerId: any;
+  private dealerId: any;
+  private retailerName = '';
+  private distributorName = '';
 
   constructor(private readonly productApiService: ProductApiService) {
     this.init();
@@ -68,10 +71,10 @@ export class OrderService {
       );
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const dealerId = params.get('dealerId') ?? environment.defaultDealerId;
-    const retailerId =
-      params.get('retailerId') ?? environment.defaultRetailerId;
+    const dealerId = sessionStorage.getItem('dealerId');
+    const retailerId = sessionStorage.getItem('retailerId');
+    this.retailerName = sessionStorage.getItem('name') ?? '';
+    this.distributorName = sessionStorage.getItem('distributorName') ?? '';
     this.dealerId = dealerId;
     this.retailerId = retailerId;
     this._loading.next(true);
@@ -176,10 +179,13 @@ export class OrderService {
           flavorGu: p.falvourGu ?? '',
           segment: p.Segment,
           segments: [p.Segment],
-          imageURL: p.regularImageURL,
-          gifImageURL: p.gifImageURL,
+          // Some products only carry the zipper-pack variants (no plain
+          // regularImageURL/gifImageURL at all) — fall back to those rather
+          // than ending up with a broken image / no gif.
+          imageURL: p.regularImageURL ?? p.zipperImageURL,
+          gifImageURL: p.gifImageURL ?? p.zipperGifImageURL,
           zipperImageURL: p.zipperImageURL,
-          isVideo: !!p.gifImageURL,
+          isVideo: !!(p.gifImageURL ?? p.zipperGifImageURL),
           flavourSequence: p.flavour_Sequence ?? 0,
           products: [],
           groupTotal: 0,
@@ -396,8 +402,9 @@ export class OrderService {
     return group.flavorEn;
   }
 
-  submitOrder(): Observable<unknown> {
-    const products = this.buildPreviewRows()
+  submitOrder(): Observable<SubmitOrderResponse> {
+    const previewRows = this.buildPreviewRows();
+    const products = previewRows
       .map((row) => {
         const units: CreateOrderPayload['products'][0]['units'] = [];
         if (row.packetQty > 0)
@@ -421,6 +428,53 @@ export class OrderService {
       source: 'WhatsApp',
     };
 
-    return this.productApiService.submitOrder(payload);
+    return this.productApiService.submitOrder(payload).pipe(
+      switchMap((response) =>
+        this.productApiService
+          .generateOrderAcknowledgement(
+            this.buildAcknowledgementPayload(response.order_ID, previewRows),
+          )
+          .pipe(
+            catchError((err) => {
+              // The order itself already succeeded — don't fail the whole
+              // submission just because the acknowledgement PDF couldn't
+              // be generated.
+              console.error('Failed to generate order acknowledgement', err);
+              return of(undefined);
+            }),
+            map(() => response),
+          ),
+      ),
+    );
+  }
+
+  private buildAcknowledgementPayload(
+    orderNumber: string,
+    previewRows: OrderPreviewRow[],
+  ): OrderAcknowledgementPayload {
+    const today = new Date();
+    const orderDate = [
+      String(today.getDate()).padStart(2, '0'),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      today.getFullYear(),
+    ].join('/');
+
+    return {
+      name: this.retailerName,
+      distributorName: this.distributorName,
+      orderNumber,
+      orderDate,
+      contactNumber: sessionStorage.getItem('contactNumber') ?? '',
+      total_amount_inr: Math.round(
+        previewRows.reduce((sum, row) => sum + row.amount, 0),
+      ),
+      items: previewRows.map((row) => ({
+        item_name: row.productName,
+        box_qty: row.boxBunchQty,
+        patti_qty: row.pattiQty,
+        pkt_qty: row.packetQty,
+        amount_inr: Math.round(row.amount),
+      })),
+    };
   }
 }

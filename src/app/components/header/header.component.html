@@ -89,9 +89,20 @@
         <span class="chip-label">Cart</span>
         <span class="chip-value">🛒</span>
       </button>
-      <button class="btn btn-theme" (click)="themeService.toggle()">
+      <button
+        class="btn btn-theme"
+        [class.active]="vm.isDarkMode"
+        role="switch"
+        [attr.aria-checked]="vm.isDarkMode"
+        aria-label="Toggle dark mode"
+        (click)="themeService.toggle()"
+      >
         <span class="chip-label">Mode</span>
-        <span class="chip-value">{{ vm.isDarkMode ? "☀️" : "🌙" }}</span>
+        <span class="theme-toggle-track">
+          <span class="theme-toggle-icon sun">☀️</span>
+          <span class="theme-toggle-icon moon">🌙</span>
+          <span class="theme-toggle-thumb"></span>
+        </span>
       </button>
     </div>
   </header>

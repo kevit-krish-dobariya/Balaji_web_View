@@ -1,12 +1,34 @@
 <ng-container *ngIf="vm$ | async as vm">
   <div class="app-wrapper" [class.dark]="vm.isDarkMode">
-    <div class="toast-message" [class.toast-visible]="vm.toastVisible">
-      <span class="toast-icon">⚠️</span>
-      <div class="toast-body">
-        <span class="toast-title">Invalid Input</span>
-        <span class="toast-desc">{{ vm.toastMessage }}</span>
-      </div>
+    <!-- Auth: checking -->
+    <div class="auth-screen" *ngIf="vm.authState === 'pending'">
+      <div class="auth-spinner"></div>
+      <p class="auth-msg">Verifying access, please wait…</p>
     </div>
-    <router-outlet></router-outlet>
+
+    <!-- Auth: unauthorized -->
+    <div
+      class="auth-screen auth-denied"
+      *ngIf="vm.authState === 'unauthorized'"
+    >
+      <div class="auth-icon">🚫</div>
+      <h2 class="auth-title">Access Denied</h2>
+      <p class="auth-msg">
+        You are not authorized to view this page.<br />Please use the link
+        shared with you or contact support.
+      </p>
+    </div>
+
+    <!-- Auth: authorized -->
+    <ng-container *ngIf="vm.authState === 'authorized'">
+      <div class="toast-message" [class.toast-visible]="vm.toastVisible">
+        <span class="toast-icon">⚠️</span>
+        <div class="toast-body">
+          <span class="toast-title">Invalid Input</span>
+          <span class="toast-desc">{{ vm.toastMessage }}</span>
+        </div>
+      </div>
+      <router-outlet></router-outlet>
+    </ng-container>
   </div>
 </ng-container>

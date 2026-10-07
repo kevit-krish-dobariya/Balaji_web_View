@@ -54,12 +54,11 @@
   border-radius: 12px;
 }
 
-.product-image img,
 .product-image video {
-  width: 180px;
-  height: 180px;
+  width: 300px;
+  height: 300px;
   object-fit: contain;
-  padding: 8px;
+  padding: 6px;
   box-sizing: border-box;
 }
 
@@ -73,7 +72,7 @@
   font-size: 8px;
   font-weight: 800;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   text-align: center;
   letter-spacing: 0.6px;
   box-shadow: 0 2px 5px rgba(21, 101, 192, 0.35);
@@ -342,8 +341,8 @@ tbody tr:nth-child(even) {
   }
 
   .product-image {
-    width: 90px;
-    min-width: 90px;
+    width: 130px;
+    min-width: 130px;
     flex-shrink: 0;
     padding: 0;
     border-bottom: none;
@@ -358,10 +357,9 @@ tbody tr:nth-child(even) {
     border-right: 1px solid #2e2e2e;
   }
 
-  .product-image img,
   .product-image video {
-    width: 80px;
-    height: 80px;
+    width: 150px;
+    height: 150px;
   }
 
   .product-card.card-focused {
@@ -453,14 +451,13 @@ tbody tr:nth-child(even) {
   }
 
   .product-image {
-    width: 72px;
-    min-width: 72px;
+    width: 104px;
+    min-width: 104px;
   }
 
-  .product-image img,
   .product-image video {
-    width: 64px;
-    height: 64px;
+    width: 116px;
+    height: 116px;
   }
 
   .flavor-name {

@@ -1,27 +1,19 @@
 <div class="product-card" [class.card-focused]="cardFocused">
   <div class="product-image">
-    <ng-container *ngIf="group.isVideo; else imageTemplate">
-      <video
-        #videoEl
-        [src]="orderService.getGroupImage(group)"
-        muted
-        playsinline
-        preload="metadata"
-        (timeupdate)="
-          !playingFromMid &&
-            videoEl.currentTime >= videoEl.duration / 2 &&
-            videoEl.pause()
-        "
-        (ended)="onVideoEnded()"
-      ></video>
-    </ng-container>
-    <ng-template #imageTemplate>
-      <img
-        [src]="orderService.getGroupImage(group)"
-        [alt]="group.flavorEn"
-        loading="lazy"
-      />
-    </ng-template>
+    <video
+      *ngIf="group.isVideo && videoInView"
+      #videoEl
+      [src]="orderService.getGroupImage(group)"
+      muted
+      playsinline
+      preload="metadata"
+      (timeupdate)="
+        !playingFromMid &&
+          videoEl.currentTime >= videoEl.duration / 2 &&
+          videoEl.pause()
+      "
+      (ended)="onVideoEnded()"
+    ></video>
     <span class="segment-badge">{{ group.flavorEn }}</span>
     <span *ngIf="groupHasNewItem" class="new-sticker">✨ NEW</span>
   </div>

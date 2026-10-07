@@ -13,7 +13,12 @@
     </div>
   </div>
 
-  <div class="preview-empty" *ngIf="previewRows.length === 0">
+  <div class="preview-loading" *ngIf="isLoading">
+    <div class="preview-spinner"></div>
+    <span>Loading your order...</span>
+  </div>
+
+  <div class="preview-empty" *ngIf="!isLoading && previewRows.length === 0">
     No products ordered yet. Go back and add quantities.
   </div>
 
@@ -192,7 +197,8 @@
     </div>
     <div class="consent-modal-body">
       <p class="consent-message">
-        There may be differences between ordered and delivered amounts. Please confirm if acceptable.
+        There may be differences between ordered and delivered amounts. Please
+        confirm if acceptable.
       </p>
       <label class="consent-checkbox-label">
         <input
@@ -204,7 +210,9 @@
       </label>
     </div>
     <div class="consent-modal-footer">
-      <button class="btn consent-cancel-btn" (click)="cancelSubmit()">Cancel</button>
+      <button class="btn consent-cancel-btn" (click)="cancelSubmit()">
+        Cancel
+      </button>
       <button
         class="btn consent-ok-btn"
         (click)="confirmSubmit()"
