@@ -44,6 +44,27 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.stag.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "10kb",
+                  "maximumError": "20kb"
+                }
+              ],
+              "outputHashing": "all"
+            },
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -63,6 +84,9 @@
           "configurations": {
             "production": {
               "browserTarget": "balaji_webview:build:production"
+            },
+            "staging": {
+              "browserTarget": "balaji_webview:build:staging"
             },
             "development": {
               "browserTarget": "balaji_webview:build:development"
