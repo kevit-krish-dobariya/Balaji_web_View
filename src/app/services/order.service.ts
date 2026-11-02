@@ -10,6 +10,7 @@ import {
   ProductsResponse,
   SubmitOrderResponse,
 } from './product-api.service';
+import { ToastService } from './toast.service';
 
 const STORAGE_KEY = 'balaji_order_quantities';
 const CART_KEY = 'balaji_cart_mode';
@@ -57,7 +58,10 @@ export class OrderService {
   private retailerName = '';
   private dealerName = '';
 
-  constructor(private readonly productApiService: ProductApiService) {
+  constructor(
+    private readonly productApiService: ProductApiService,
+    private readonly toastService: ToastService,
+  ) {
     this.init();
   }
 
@@ -440,6 +444,9 @@ export class OrderService {
               // submission just because the acknowledgement PDF couldn't
               // be generated.
               console.error('Failed to generate order acknowledgement', err);
+              this.toastService.show(
+                'Order placed, but the confirmation PDF could not be generated. Contact support if it does not arrive.',
+              );
               return of(undefined);
             }),
             map(() => response),
