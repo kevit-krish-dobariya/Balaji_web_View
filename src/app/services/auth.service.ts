@@ -33,11 +33,25 @@ export class AuthService {
     }
 
     return this.http
-      .post<DecryptedPayload>(
-        `${environment.apiUrl}/custom/utility/decrypt-payload`,
-        { encryptedPayload: token },
-      )
+      .post<{
+        dealerId: string;
+        contactNumber: string;
+        retailerId: string;
+        name: string;
+        distributorName: string;
+      }>(`${environment.apiUrl}/custom/utility/decrypt-payload`, {
+        encryptedPayload: token,
+      })
       .pipe(
+        map(
+          (response): DecryptedPayload => ({
+            dealerId: response.dealerId,
+            contactNumber: response.contactNumber,
+            retailerId: response.retailerId,
+            retailerName: response.name,
+            dealerName: response.distributorName,
+          }),
+        ),
         tap((payload) => {
           sessionStorage.setItem('dealerId', payload.dealerId);
           sessionStorage.setItem('contactNumber', payload.contactNumber);
@@ -54,7 +68,16 @@ export class AuthService {
   }
 
   verify(): void {
-    console.log('navigator.userAgent =', navigator.userAgent);
+    const userAgent = navigator.userAgent;
+
+    const isWhatsAppMobile = /\bWA(4A|iOS)\//i.test(userAgent);
+
+    const isDesktop = !/Android|iPhone|iPad|iPod/i.test(userAgent);
+
+    if (!isWhatsAppMobile && !isDesktop) {
+      this._authState.next('unauthorized');
+      return;
+    }
 
     const contactNumber = sessionStorage.getItem('contactNumber');
     this.contactNumber = contactNumber;
