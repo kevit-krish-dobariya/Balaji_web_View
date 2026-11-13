@@ -68,13 +68,10 @@ export class AuthService {
   }
 
   verify(): void {
-    const userAgent = navigator.userAgent;
+    // TEMP DEBUG — remove once we've confirmed what UA WhatsApp Web on PC sends.
+    console.log('[auth-debug] navigator.userAgent =', navigator.userAgent);
 
-    const isWhatsAppMobile = /\bWA(4A|iOS)\//i.test(userAgent);
-
-    const isDesktop = !/Android|iPhone|iPad|iPod/i.test(userAgent);
-
-    if (!isWhatsAppMobile && !isDesktop) {
+    if (!/\bWA(4A|iOS)\//i.test(navigator.userAgent)) {
       this._authState.next('unauthorized');
       return;
     }
