@@ -33,25 +33,11 @@ export class AuthService {
     }
 
     return this.http
-      .post<{
-        dealerId: string;
-        contactNumber: string;
-        retailerId: string;
-        name: string;
-        distributorName: string;
-      }>(`${environment.apiUrl}/custom/utility/decrypt-payload`, {
-        encryptedPayload: token,
-      })
+      .post<DecryptedPayload>(
+        `${environment.apiUrl}/custom/utility/decrypt-payload`,
+        { encryptedPayload: token },
+      )
       .pipe(
-        map(
-          (response): DecryptedPayload => ({
-            dealerId: response.dealerId,
-            contactNumber: response.contactNumber,
-            retailerId: response.retailerId,
-            retailerName: response.name,
-            dealerName: response.distributorName,
-          }),
-        ),
         tap((payload) => {
           sessionStorage.setItem('dealerId', payload.dealerId);
           sessionStorage.setItem('contactNumber', payload.contactNumber);
