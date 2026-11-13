@@ -39,10 +39,9 @@ export class AuthService {
         retailerId: string;
         name: string;
         distributorName: string;
-      }>(
-        `${environment.apiUrl}/custom/utility/decrypt-payload`,
-        { encryptedPayload: token },
-      )
+      }>(`${environment.apiUrl}/custom/utility/decrypt-payload`, {
+        encryptedPayload: token,
+      })
       .pipe(
         map(
           (response): DecryptedPayload => ({
@@ -69,7 +68,13 @@ export class AuthService {
   }
 
   verify(): void {
-    if (!/\bWA(4A|iOS)\//i.test(navigator.userAgent)) {
+    const userAgent = navigator.userAgent;
+
+    const isWhatsAppMobile = /\bWA(4A|iOS)\//i.test(userAgent);
+
+    const isDesktop = !/Android|iPhone|iPad|iPod/i.test(userAgent);
+
+    if (!isWhatsAppMobile && !isDesktop) {
       this._authState.next('unauthorized');
       return;
     }
