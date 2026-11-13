@@ -68,6 +68,7 @@ export class AuthService {
   }
 
   verify(): void {
+    console.log('navigator.userAgent =', navigator.userAgent);
 
     const contactNumber = sessionStorage.getItem('contactNumber');
     this.contactNumber = contactNumber;
