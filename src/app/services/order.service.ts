@@ -189,6 +189,7 @@ export class OrderService {
           imageURL: p.regularImageURL ?? p.zipperImageURL,
           gifImageURL: p.gifImageURL ?? p.zipperGifImageURL,
           zipperImageURL: p.zipperImageURL,
+          zipperGifImageURL: p.zipperGifImageURL,
           isVideo: !!(p.gifImageURL ?? p.zipperGifImageURL),
           flavourSequence: p.flavour_Sequence ?? 0,
           products: [],
@@ -312,7 +313,13 @@ export class OrderService {
   }
 
   setSegment(segment: string): void {
-    this._activeSegment.next(segment);
+    // Clicking the already-active tag again deselects it back to "ALL"
+    // instead of staying stuck on it.
+    const next =
+      this._activeSegment.value === segment && segment !== 'ALL'
+        ? 'ALL'
+        : segment;
+    this._activeSegment.next(next);
     this.onSearch();
   }
 
@@ -367,16 +374,22 @@ export class OrderService {
   }
 
   getGroupImage(group: ProductGroup): string {
-    if (group.isVideo && group.gifImageURL) {
-      return group.gifImageURL;
-    }
-    if (group.zipperImageURL && this.focusedProduct) {
-      const isInGroup = group.products.includes(this.focusedProduct);
-      if (isInGroup) {
-        return parseFloat(this.focusedProduct.weight) > 200
-          ? group.zipperImageURL
-          : group.imageURL;
+    const isBigFocusedSku =
+      !!this.focusedProduct &&
+      group.products.includes(this.focusedProduct) &&
+      this.focusedProduct.patti === 0;
+
+    if (group.isVideo) {
+      if (isBigFocusedSku && group.zipperGifImageURL) {
+        return group.zipperGifImageURL;
       }
+      if (group.gifImageURL) {
+        return group.gifImageURL;
+      }
+    }
+
+    if (isBigFocusedSku && group.zipperImageURL) {
+      return group.zipperImageURL;
     }
     return group.imageURL;
   }

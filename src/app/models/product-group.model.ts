@@ -9,6 +9,7 @@ export interface ProductGroup {
   imageURL: string;
   gifImageURL?: string;
   zipperImageURL?: string;
+  zipperGifImageURL?: string;
   isVideo: boolean;
   flavourSequence: number;
   products: Product[];

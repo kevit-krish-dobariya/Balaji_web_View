@@ -29,6 +29,7 @@
 
 .preview-totals {
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   font-size: 15px;
@@ -41,6 +42,21 @@
 :host-context(.dark) .preview-totals {
   background: #0d2a4d;
   color: #90caf9;
+}
+
+.header-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.hs-label::after {
+  content: ":";
+}
+
+.hs-value {
+  font-weight: bold;
 }
 
 .sep {
@@ -335,14 +351,84 @@
   }
 
   .preview-totals {
-    font-size: 13px;
-    padding: 6px 12px;
+    font-size: 10px;
+    padding: 6px 2px;
     width: 100%;
     box-sizing: border-box;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    background: #e3f0ff;
+    border-radius: 10px;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
+  .preview-totals::-webkit-scrollbar {
+    display: none;
+  }
+
+  :host-context(.dark) .preview-totals {
+    background: #0d2a4d;
+  }
+
+  /* Label-above-value stacked columns, like a mini version of the
+     per-product MRP/Rate/Box stat chips below — far more compact per item
+     than "Label: value" inline text, which is what makes everything fit on
+     one line without wrapping or shrinking the font further. */
+  .header-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(21, 101, 192, 0.18);
+  }
+
+  .header-stat:last-child {
+    border-right: none;
+  }
+
+  :host-context(.dark) .header-stat {
+    border-color: rgba(144, 202, 249, 0.18);
+  }
+
+  /* "Total Qty" is just a heading for the breakdown that follows — no
+     number of its own on mobile, where every item is label-over-value. */
+  .header-stat-qty .hs-value {
+    display: none;
+  }
+
+  .hs-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #546e7a;
+  }
+
+  :host-context(.dark) .hs-label {
+    color: #90caf9;
+  }
+
+  .hs-label::after {
+    content: "";
+  }
+
+  .hs-value {
+    font-size: 13px;
+    margin-top: 2px;
+    color: #1251a3;
+  }
+
+  :host-context(.dark) .hs-value {
+    color: #90caf9;
+  }
+
+  /* The dividers between stats are now the column borders above instead. */
   .sep {
     display: none;
   }
@@ -374,10 +460,38 @@
   .preview-card-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     background: linear-gradient(135deg, #1251a3, #1976d2);
     color: #fff;
     padding: 11px 14px;
+  }
+
+  .preview-card-netpay-badge {
+    margin-left: auto;
+    display: inline-block;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 10px;
+    padding: 5px 12px;
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+
+  .badge-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #1565c0;
+  }
+
+  .badge-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    color: #1251a3;
   }
 
   .preview-card-sr {
@@ -407,10 +521,17 @@
 
   .preview-card-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     border-bottom: 1px solid #eef2f9;
-    padding: 8px 6px;
-    gap: 2px;
+    padding: 6px 12px;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .preview-card-row::-webkit-scrollbar {
+    display: none;
   }
 
   :host-context(.dark) .preview-card-row {
@@ -421,9 +542,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 5px 10px;
+    padding: 4px 4px;
     border-right: 1px solid #eef2f9;
-    min-width: 56px;
+    min-width: 0;
+    flex-shrink: 0;
   }
 
   .preview-card-stat:last-child {
@@ -435,18 +557,20 @@
   }
 
   .pcs-label {
-    font-size: 9px;
+    font-size: 7px;
     font-weight: 700;
     text-transform: uppercase;
     color: #94a3b8;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
   }
 
   .pcs-value {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     color: #1e293b;
     margin-top: 2px;
+    white-space: nowrap;
   }
 
   :host-context(.dark) .pcs-value {
@@ -456,85 +580,7 @@
   .pcs-highlight {
     color: #1565c0;
     font-weight: 800;
-    font-size: 14px;
-  }
-
-  .preview-card-financials {
-    display: flex;
-    border-bottom: 1px solid #eef2f9;
-  }
-
-  :host-context(.dark) .preview-card-financials {
-    border-color: #2e3a4e;
-  }
-
-  .preview-fin-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 10px 14px;
-    border-right: 1px solid #eef2f9;
-  }
-
-  .preview-fin-item:last-child {
-    border-right: none;
-  }
-
-  :host-context(.dark) .preview-fin-item {
-    border-color: #2e3a4e;
-  }
-
-  .fin-label {
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-    margin-bottom: 3px;
-  }
-
-  .fin-value {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1e293b;
-  }
-
-  :host-context(.dark) .fin-value {
-    color: #e2e8f0;
-  }
-
-  .preview-card-netpay {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f0f6ff;
-    padding: 10px 14px;
-  }
-
-  :host-context(.dark) .preview-card-netpay {
-    background: #0d2a4d;
-  }
-
-  .netpay-label {
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #546e7a;
-  }
-
-  :host-context(.dark) .netpay-label {
-    color: #90caf9;
-  }
-
-  .netpay-value {
-    font-size: 16px;
-    font-weight: 800;
-    color: #1565c0;
-  }
-
-  :host-context(.dark) .netpay-value {
-    color: #64b5f6;
   }
 
   .preview-cards-footer {
@@ -630,7 +676,7 @@
   border-radius: 16px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22);
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   overflow: hidden;
   animation: modal-pop 0.18s ease;
 }
@@ -687,11 +733,21 @@
   gap: 16px;
 }
 
+.consent-message-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .consent-message {
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
   color: #37474f;
+}
+
+.consent-message-hi {
+  font-weight: 700;
 }
 
 :host-context(.dark) .consent-message {

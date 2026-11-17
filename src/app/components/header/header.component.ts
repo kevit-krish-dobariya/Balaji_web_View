@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   HostListener,
+  ViewChild,
 } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { OrderService } from '../../services/order.service';
@@ -15,6 +17,8 @@ import { ThemeService } from '../../services/theme.service';
 })
 export class HeaderComponent {
   showSortMenu = false;
+
+  @ViewChild('segmentRow') segmentRow?: ElementRef<HTMLElement>;
 
   readonly vm$ = combineLatest({
     grandBox: this.orderService.grandBox$,
@@ -42,5 +46,20 @@ export class HeaderComponent {
 
   trackBySegment(_index: number, segment: string): string {
     return segment;
+  }
+
+  onSegmentClick(seg: string): void {
+    this.orderService.setSegment(seg);
+   
+    setTimeout(() => {
+      const activeBtn = this.segmentRow?.nativeElement.querySelector(
+        '.seg-active',
+      ) as HTMLElement | null;
+      activeBtn?.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    });
   }
 }

@@ -29,6 +29,10 @@ export class OrderPreviewComponent implements OnInit {
   previewGrandQty = 0;
   previewGrandGst = 0;
   previewGrandGstTotal = 0;
+  previewGrandBox = 0;
+  previewGrandPatti = 0;
+  previewGrandPkt = 0;
+  previewGrandTotalPkts = 0;
   subTotal = 0;
   grandTotalRounded = 0;
 
@@ -71,6 +75,22 @@ export class OrderPreviewComponent implements OnInit {
           (sum, r) => sum + r.amount + r.gstAmount,
           0,
         );
+        this.previewGrandBox = this.previewRows.reduce(
+          (sum, r) => sum + r.boxBunchQty,
+          0,
+        );
+        this.previewGrandPatti = this.previewRows.reduce(
+          (sum, r) => sum + r.pattiQty,
+          0,
+        );
+        this.previewGrandPkt = this.previewRows.reduce(
+          (sum, r) => sum + r.packetQty,
+          0,
+        );
+        this.previewGrandTotalPkts = this.previewRows.reduce(
+          (sum, r) => sum + this.rowTotalPkts(r),
+          0,
+        );
         this.subTotal = this.previewGrandAmt + this.previewGrandGst;
         this.grandTotalRounded = Math.round(this.subTotal);
         this.cdr.markForCheck();
@@ -79,6 +99,14 @@ export class OrderPreviewComponent implements OnInit {
 
   backToList(): void {
     this.navigateToOrder();
+  }
+
+  rowTotalPkts(row: OrderPreviewRow): number {
+    return (
+      row.boxBunchQty * row.boxBunch +
+      row.pattiQty * row.pattiSize +
+      row.packetQty
+    );
   }
 
   onSubmit(): void {

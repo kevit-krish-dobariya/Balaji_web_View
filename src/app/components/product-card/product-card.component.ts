@@ -103,32 +103,46 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
     this.orderService.onInputFocus(product);
     this.cdr.markForCheck();
     const video = this.videoRef?.nativeElement;
-    if (!this.cardFocused) {
-      this.cardFocused = true;
+    const firstFocus = !this.cardFocused;
+    this.cardFocused = true;
+
+    if (!video) {
+      return;
+    }
+
+    const targetSrc = this.orderService.getGroupImage(this.group);
+    const sourceChanged =
+      !!targetSrc && video.getAttribute('src') !== targetSrc;
+    if (sourceChanged) {
+      video.src = targetSrc;
+    }
+
+    if (firstFocus || sourceChanged) {
       this.clearAutoPreviewTimer();
-      if (video) {
-        this.playingFromMid = false;
-        video.currentTime = 0;
-        video.play();
-      }
+      this.playingFromMid = false;
+      video.currentTime = 0;
+      video.play().catch(() => {});
     }
   }
 
   onInputBlur(): void {
     this.orderService.onInputBlur();
     setTimeout(() => {
-      if (
-        !this.orderService.focusedProduct ||
-        !this.group.products.includes(this.orderService.focusedProduct)
-      ) {
-        this.cardFocused = false;
-        this.cdr.markForCheck();
-        const video = this.videoRef?.nativeElement;
-        if (video) {
-          this.playingFromMid = true;
-          video.currentTime = video.duration / 2;
-          video.play();
-        }
+      const stillFocusedInThisGroup =
+        this.orderService.focusedProduct &&
+        this.group.products.includes(this.orderService.focusedProduct);
+      if (stillFocusedInThisGroup) {
+        return;
+      }
+      this.cardFocused = false;
+      this.cdr.markForCheck();
+      const video = this.videoRef?.nativeElement;
+      if (video) {
+        this.playingFromMid = true;
+        video.currentTime = video.duration / 2;
+        video.play();
+      }
+      if (!this.orderService.focusedProduct) {
         this.correctScrollOnOvershoot();
       }
     }, 0);

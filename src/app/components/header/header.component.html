@@ -51,12 +51,12 @@
             </div>
           </div>
         </div>
-        <div class="segment-filter-row">
+        <div class="segment-filter-row" #segmentRow>
           <button
             *ngFor="let seg of vm.segments; trackBy: trackBySegment"
             class="seg-btn"
             [class.seg-active]="vm.activeSegment === seg"
-            (click)="orderService.setSegment(seg)"
+            (click)="onSegmentClick(seg)"
           >
             <span *ngIf="seg === 'NEW'">✨ </span>{{ seg }}
           </button>

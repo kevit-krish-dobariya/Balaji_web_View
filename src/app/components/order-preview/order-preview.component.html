@@ -2,14 +2,37 @@
   <div class="preview-header">
     <h2>📋 Order Preview</h2>
     <div class="preview-totals">
-      <span
-        >Total Qty: <strong>{{ previewGrandQty }}</strong></span
-      >
+      <div class="header-stat header-stat-qty">
+        <span class="hs-label">Total Qty</span>
+        <strong class="hs-value">{{ previewGrandQty }}</strong>
+      </div>
       <span class="sep">|</span>
-      <span
-        >Net Payable:
-        <strong>₹{{ previewGrandGstTotal | indianCurrency }}</strong></span
-      >
+      <div class="header-stat">
+        <span class="hs-label">Box</span>
+        <strong class="hs-value">{{ previewGrandBox }}</strong>
+      </div>
+      <span class="sep">|</span>
+      <div class="header-stat">
+        <span class="hs-label">Patti</span>
+        <strong class="hs-value">{{ previewGrandPatti }}</strong>
+      </div>
+      <span class="sep">|</span>
+      <div class="header-stat">
+        <span class="hs-label">Pkt</span>
+        <strong class="hs-value">{{ previewGrandPkt }}</strong>
+      </div>
+      <span class="sep">|</span>
+      <div class="header-stat">
+        <span class="hs-label">Total Pkts</span>
+        <strong class="hs-value">{{ previewGrandTotalPkts }}</strong>
+      </div>
+      <span class="sep">|</span>
+      <div class="header-stat">
+        <span class="hs-label">Net Payable</span>
+        <strong class="hs-value"
+          >₹{{ previewGrandGstTotal | indianCurrency }}</strong
+        >
+      </div>
     </div>
   </div>
 
@@ -64,11 +87,7 @@
           <td>{{ row.pattiQty || "-" }}</td>
           <td>{{ row.packetQty || "-" }}</td>
           <td>
-            <strong>{{
-              row.boxBunchQty * row.boxBunch +
-                row.pattiQty * row.pattiSize +
-                row.packetQty
-            }}</strong>
+            <strong>{{ rowTotalPkts(row) }}</strong>
           </td>
           <td class="amt-cell gst-cell">{{ row.gstPercentage }}%</td>
           <td class="amt-cell gst-cell">
@@ -82,7 +101,15 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="10" class="footer-label"><strong>TOTAL</strong></td>
+          <td colspan="4" class="footer-label"><strong>TOTAL</strong></td>
+          <td><strong>{{ previewGrandBox }}</strong></td>
+          <td><strong>{{ previewGrandPatti }}</strong></td>
+          <td><strong>{{ previewGrandPkt }}</strong></td>
+          <td><strong>{{ previewGrandTotalPkts }}</strong></td>
+          <td>-</td>
+          <td class="amt-cell footer-total">
+            <strong>₹{{ previewGrandGst | indianCurrency }}</strong>
+          </td>
           <td class="amt-cell footer-total">
             <strong>₹{{ previewGrandAmt | indianCurrency }}</strong>
           </td>
@@ -100,6 +127,12 @@
       <div class="preview-card-header">
         <span class="preview-card-sr">{{ i + 1 }}</span>
         <span class="preview-card-name">{{ row.productName }}</span>
+        <span class="preview-card-netpay-badge">
+          <span class="badge-label">Net Payable</span>
+          <span class="badge-value"
+            >₹{{ row.amount + row.gstAmount | indianCurrency }}</span
+          >
+        </span>
       </div>
       <div class="preview-card-body">
         <div class="preview-card-row">
@@ -111,51 +144,41 @@
             <span class="pcs-label">Rate</span>
             <span class="pcs-value">₹{{ row.unitPrice | indianCurrency }}</span>
           </div>
-          <div class="preview-card-stat" *ngIf="row.boxBunchQty">
+          <div class="preview-card-stat">
             <span class="pcs-label">Box</span>
-            <span class="pcs-value">{{ row.boxBunchQty }}</span>
+            <span class="pcs-value">{{ row.boxBunchQty || 0 }}</span>
           </div>
-          <div class="preview-card-stat" *ngIf="row.pattiQty">
+          <div class="preview-card-stat">
             <span class="pcs-label">Patti</span>
-            <span class="pcs-value">{{ row.pattiQty }}</span>
+            <span class="pcs-value">{{ row.pattiQty || 0 }}</span>
           </div>
-          <div class="preview-card-stat" *ngIf="row.packetQty">
+          <div class="preview-card-stat">
             <span class="pcs-label">Pkt</span>
-            <span class="pcs-value">{{ row.packetQty }}</span>
+            <span class="pcs-value">{{ row.packetQty || 0 }}</span>
           </div>
           <div class="preview-card-stat">
             <span class="pcs-label">Total Pkts</span>
             <span class="pcs-value pcs-highlight">{{
-              row.boxBunchQty * row.boxBunch +
-                row.pattiQty * row.pattiSize +
-                row.packetQty
+              rowTotalPkts(row)
             }}</span>
           </div>
-        </div>
-        <div class="preview-card-financials">
-          <div class="preview-fin-item">
-            <span class="fin-label">Taxable Amt</span>
-            <span class="fin-value">₹{{ row.amount | indianCurrency }}</span>
+          <div class="preview-card-stat">
+            <span class="pcs-label">Taxable Amt</span>
+            <span class="pcs-value">₹{{ row.amount | indianCurrency }}</span>
           </div>
-          <div class="preview-fin-item">
-            <span class="fin-label">GST ({{ row.gstPercentage }}%)</span>
-            <span class="fin-value gst-cell"
+          <div class="preview-card-stat">
+            <span class="pcs-label">GST ({{ row.gstPercentage }}%)</span>
+            <span class="pcs-value gst-cell"
               >₹{{ row.gstAmount | indianCurrency }}</span
             >
           </div>
-        </div>
-        <div class="preview-card-netpay">
-          <span class="netpay-label">Net Payable</span>
-          <span class="netpay-value"
-            >₹{{ row.amount + row.gstAmount | indianCurrency }}</span
-          >
         </div>
       </div>
     </div>
 
     <div class="preview-cards-footer">
       <div class="footer-row">
-        <span class="footer-row-label">Total Taxable</span>
+        <span class="footer-row-label">Total Taxable Value</span>
         <span class="footer-row-value"
           >₹{{ previewGrandAmt | indianCurrency }}</span
         >
@@ -193,20 +216,30 @@
   <div class="consent-modal" (click)="$event.stopPropagation()">
     <div class="consent-modal-header">
       <span class="consent-modal-icon">⚠️</span>
-      <h3 class="consent-modal-title">Confirm Order</h3>
+      <h3 class="consent-modal-title">
+        Confirm Order / <span lang="hi">ऑर्डर की पुष्टि करें</span>
+      </h3>
     </div>
     <div class="consent-modal-body">
-      <p class="consent-message">
-        There may be differences between ordered and delivered amounts. Please
-        confirm if acceptable.
-      </p>
+      <div class="consent-message-group">
+        <p class="consent-message">
+          There may be differences between ordered and delivered quantities.
+          Please confirm if acceptable.
+        </p>
+        <p class="consent-message consent-message-hi" lang="hi">
+          ऑर्डर की गई और डिलीवर की गई मात्रा (Quantity) में अंतर हो सकता है।
+          यदि आप सहमत हैं तो कृपया पुष्टि करें।
+        </p>
+      </div>
       <label class="consent-checkbox-label">
         <input
           type="checkbox"
           class="consent-checkbox"
           [(ngModel)]="consentChecked"
         />
-        <span class="consent-checkbox-text">I understand and accept</span>
+        <span class="consent-checkbox-text"
+          >I understand and accept / <span lang="hi">हाँ मैं सहमत हूँ</span></span
+        >
       </label>
     </div>
     <div class="consent-modal-footer">
