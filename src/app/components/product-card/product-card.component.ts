@@ -26,7 +26,6 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
   protected playingFromMid = false;
   protected videoInView = false;
   private visibilityObserver?: IntersectionObserver;
-  private autoPreviewTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     public orderService: OrderService,
@@ -43,47 +42,138 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
     this.visibilityObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          this.videoInView = true;
-          this.cdr.markForCheck();
           this.visibilityObserver?.disconnect();
-          // Wait a tick for *ngIf to actually create the <video> element.
-          setTimeout(() => this.playInitialPreview(), 0);
+          // On first load, every above-the-fold card's video is "in view"
+          // at essentially the same moment, so without this they'd all
+          // start fetching simultaneously and split the same limited
+          // mobile-data pipe between them. Staggering lets the first one
+          // start immediately and the rest follow shortly after, instead
+          // of all of them loading slower together.
+          ProductCardComponent.scheduleActivation(() => {
+            this.videoInView = true;
+            this.cdr.markForCheck();
+            // Wait a tick for *ngIf to actually create the <video> element.
+            setTimeout(() => this.playInitialPreview(), 0);
+          });
         }
       },
-      { rootMargin: '300px 0px' },
+      // Kept tight so far-off cards don't all start fetching their videos
+      // at once and starve the ones actually about to be seen.
+      { rootMargin: '120px 0px' },
     );
     this.visibilityObserver.observe(this.elementRef.nativeElement);
   }
 
+  // Shared across every card: runs the first queued activation right away
+  // and staggers any others queued around the same time, so a burst of
+  // simultaneously-visible cards (e.g. on initial page load) doesn't have
+  // them all start fetching their video at once.
+  private static readonly ACTIVATION_STAGGER_MS = 180;
+  private static pendingActivations: Array<() => void> = [];
+  private static activationTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private static scheduleActivation(run: () => void): void {
+    ProductCardComponent.pendingActivations.push(run);
+    if (ProductCardComponent.activationTimer !== null) {
+      return; // a drain loop is already running
+    }
+    const drain = () => {
+      const next = ProductCardComponent.pendingActivations.shift();
+      next?.();
+      ProductCardComponent.activationTimer =
+        ProductCardComponent.pendingActivations.length > 0
+          ? setTimeout(drain, ProductCardComponent.ACTIVATION_STAGGER_MS)
+          : null;
+    };
+    drain();
+  }
+
   ngOnDestroy(): void {
     this.visibilityObserver?.disconnect();
-    this.clearAutoPreviewTimer();
+    const video = this.videoRef?.nativeElement;
+    if (video) {
+      ProductCardComponent.pendingAutoplay.delete(video);
+    }
   }
 
   private playInitialPreview(): void {
     const video = this.videoRef?.nativeElement;
-    // No poster to fall back on, so play ~1s on load to force a real decoded
-    // frame to show instead of a blank box — skip if the user already
-    // focused an input before this fires.
+    // No poster to fall back on, so play the complete clip once to show
+    // real decoded motion instead of a blank/frozen box — skip if the
+    // user already focused an input before this fires. It naturally stops
+    // on the last frame at the end (no looping).
     if (!video || this.cardFocused) {
       return;
     }
-    // The first ~1.5s of these clips is just an intro/transition frame —
-    // skip straight to where the actual product packet appears.
     video.currentTime = 0.01;
-    video.play().catch(() => {});
-    this.autoPreviewTimer = setTimeout(() => {
-      if (!this.cardFocused) {
-        video.pause();
-      }
-    }, 1000);
+    this.forcePlayMuted(video);
   }
 
-  private clearAutoPreviewTimer(): void {
-    if (this.autoPreviewTimer) {
-      clearTimeout(this.autoPreviewTimer);
-      this.autoPreviewTimer = undefined;
+  // Interacting with the image directly (not just a quantity field) also
+  // replays the complete clip from the start — (click) covers mobile
+  // webview taps, (mouseenter) covers hovering on a PC browser, where a
+  // tap never happens at all.
+  onImageInteraction(): void {
+    const video = this.videoRef?.nativeElement;
+    if (!video) {
+      return;
     }
+    this.playingFromMid = false;
+    video.currentTime = 0.01;
+    this.forcePlayMuted(video);
+  }
+
+  // Chrome's autoplay policy rejects this with NotAllowedError unless the
+  // <video> is genuinely muted — setting `muted` as an HTML attribute on a
+  // dynamically-created element (as *ngIf does here) doesn't reliably set
+  // the underlying `.muted` JS property, which is what the browser's
+  // autoplay check actually reads, so it's forced directly here instead.
+  //
+  // The WhatsApp iOS in-app browser (WKWebView) goes further and rejects
+  // every play() — even a muted one — unless it happens inside a genuine
+  // touch; a card scrolling into view has no such touch behind it. There's
+  // no code-side way around that, so a rejected play() is queued and
+  // retried by ensureAutoplayUnlockListener() on the next real touch/click
+  // anywhere on the page.
+  private forcePlayMuted(video: HTMLVideoElement): void {
+    video.muted = true;
+    video
+      .play()
+      .then(() => {
+        ProductCardComponent.pendingAutoplay.delete(video);
+      })
+      .catch(() => {
+        ProductCardComponent.ensureAutoplayUnlockListener();
+        ProductCardComponent.pendingAutoplay.set(video, () =>
+          this.forcePlayMuted(video),
+        );
+      });
+  }
+
+  // Shared across every card: on the next real touch/click anywhere on the
+  // page, retries play() for every video still waiting on one. Registered
+  // once for the whole app, since the gesture that satisfies the WebView's
+  // policy is global, not tied to any particular product card.
+  private static autoplayUnlockAttached = false;
+  private static pendingAutoplay = new Map<HTMLVideoElement, () => void>();
+
+  private static ensureAutoplayUnlockListener(): void {
+    if (ProductCardComponent.autoplayUnlockAttached) {
+      return;
+    }
+    ProductCardComponent.autoplayUnlockAttached = true;
+    const retryPending = () => {
+      for (const retry of Array.from(
+        ProductCardComponent.pendingAutoplay.values(),
+      )) {
+        retry();
+      }
+    };
+    // touchstart fires at the start of an ordinary scroll drag too, not
+    // just on taps, so in practice a retry is never far behind a card
+    // scrolling into view.
+    document.addEventListener('touchstart', retryPending, { passive: true });
+    document.addEventListener('click', retryPending);
   }
 
   productTrackBy(_index: number, product: Product): string {
@@ -100,29 +190,41 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
   }
 
   onInputFocus(product: Product): void {
+    const previousSrc = this.orderService.getGroupImage(this.group);
     this.orderService.onInputFocus(product);
-    this.cdr.markForCheck();
     const video = this.videoRef?.nativeElement;
     const firstFocus = !this.cardFocused;
     this.cardFocused = true;
+    // Flush the [src] binding synchronously (instead of only scheduling a
+    // future check via markForCheck) so video.src is already pointing at
+    // the right clip (e.g. the zipper gif) by the time we touch the
+    // element below — avoids us also having to set .src imperatively,
+    // which was racing with Angular's own binding update and sometimes
+    // leaving the explicit load()/play() below acting on the stale src.
+    this.cdr.detectChanges();
 
     if (!video) {
       return;
     }
 
-    const targetSrc = this.orderService.getGroupImage(this.group);
-    const sourceChanged =
-      !!targetSrc && video.getAttribute('src') !== targetSrc;
-    if (sourceChanged) {
-      video.src = targetSrc;
+    const newSrc = this.orderService.getGroupImage(this.group);
+    const sourceChanged = !!newSrc && newSrc !== previousSrc;
+
+    if (!firstFocus && !sourceChanged) {
+      return;
     }
 
-    if (firstFocus || sourceChanged) {
-      this.clearAutoPreviewTimer();
-      this.playingFromMid = false;
-      video.currentTime = 0;
-      video.play().catch(() => {});
+    this.playingFromMid = false;
+
+    if (sourceChanged) {
+      // WebKit (the WhatsApp in-app browser on iOS) doesn't reliably pick
+      // up a src swap from just the property assignment — play() can
+      // silently keep running the old resource unless load() is called
+      // explicitly to force it to pull in the new one.
+      video.load();
     }
+    video.currentTime = 0;
+    this.forcePlayMuted(video);
   }
 
   onInputBlur(): void {
@@ -139,8 +241,14 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
       const video = this.videoRef?.nativeElement;
       if (video) {
         this.playingFromMid = true;
-        video.currentTime = video.duration / 2;
-        video.play();
+        // video.duration can still be NaN here if metadata hasn't loaded
+        // yet (e.g. a very quick focus-then-blur) — assigning a
+        // non-finite value to currentTime throws, so fall back to the
+        // start rather than crashing this handler.
+        video.currentTime = Number.isFinite(video.duration)
+          ? video.duration / 2
+          : 0;
+        this.forcePlayMuted(video);
       }
       if (!this.orderService.focusedProduct) {
         this.correctScrollOnOvershoot();
@@ -192,16 +300,33 @@ export class ProductCardComponent implements AfterViewInit, OnDestroy {
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    check(); // in case the overshoot already happened before we attached this
     const timeoutId = setTimeout(cleanup, 600);
     ProductCardComponent.cancelPendingScrollWatch = cleanup;
+    check(); // in case the overshoot already happened before we attached this
   }
 
   private static cancelPendingScrollWatch?: () => void;
 
+  // The clip's first half is the "packet opens" intro, the second half is
+  // a settled/zoomed shot shown after a blur. That mid-point pause only
+  // applies to the focused state (so typing a quantity holds on the intro
+  // frame) — the idle preview plays the complete clip once, straight
+  // through to the end, so this intentionally does nothing while idle.
+  onVideoTimeUpdate(): void {
+    const video = this.videoRef?.nativeElement;
+    if (!video || this.playingFromMid || !this.cardFocused) {
+      return;
+    }
+    if (video.currentTime >= video.duration / 2) {
+      video.pause();
+    }
+  }
+
   onVideoEnded(): void {
     const video = this.videoRef?.nativeElement;
     if (video && this.playingFromMid) {
+      // The "settling" second-half (shown after a blur) just finished —
+      // reset and rest there; it plays again on the next focus/blur.
       this.playingFromMid = false;
       video.pause();
       video.currentTime = 0;

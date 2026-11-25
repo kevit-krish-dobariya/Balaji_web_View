@@ -223,12 +223,14 @@
     <div class="consent-modal-body">
       <div class="consent-message-group">
         <p class="consent-message">
-          There may be differences between ordered and delivered quantities.
-          Please confirm if acceptable.
+          There may be differences between ordered and delivered quantities
+          <strong>due to stock availability.</strong> Please confirm if
+          acceptable.
         </p>
         <p class="consent-message consent-message-hi" lang="hi">
-          ऑर्डर की गई और डिलीवर की गई मात्रा (Quantity) में अंतर हो सकता है।
-          यदि आप सहमत हैं तो कृपया पुष्टि करें।
+          स्टॉक की उपलब्धता के अनुसार, आपके ऑर्डर की मात्रा (Quantity) और
+          डिलीवरी की मात्रा में अंतर हो सकता है। यदि यह आपको स्वीकार हैं, तो
+          कृपया पुष्टि करें।
         </p>
       </div>
       <label class="consent-checkbox-label">
@@ -238,7 +240,7 @@
           [(ngModel)]="consentChecked"
         />
         <span class="consent-checkbox-text"
-          >I understand and accept / <span lang="hi">हाँ मैं सहमत हूँ</span></span
+          >Yes, I agree / <span lang="hi">हाँ, मैं सहमत हूँ</span></span
         >
       </label>
     </div>

@@ -19,7 +19,10 @@
 
     <main class="container">
       <app-product-card
-        *ngFor="let group of vm.productGroups; trackBy: groupTrackBy"
+        *ngFor="
+          let group of visibleGroups(vm.productGroups);
+          trackBy: groupTrackBy
+        "
         [group]="group"
       ></app-product-card>
     </main>

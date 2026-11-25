@@ -187,10 +187,10 @@ export class OrderService {
           // regularImageURL/gifImageURL at all) — fall back to those rather
           // than ending up with a broken image / no gif.
           imageURL: p.regularImageURL ?? p.zipperImageURL,
-          gifImageURL: p.gifImageURL ?? p.zipperGifImageURL,
+          gifImageURL: undefined,
           zipperImageURL: p.zipperImageURL,
-          zipperGifImageURL: p.zipperGifImageURL,
-          isVideo: !!(p.gifImageURL ?? p.zipperGifImageURL),
+          zipperGifImageURL: undefined,
+          isVideo: false,
           flavourSequence: p.flavour_Sequence ?? 0,
           products: [],
           groupTotal: 0,
@@ -210,6 +210,20 @@ export class OrderService {
       if (!grp.segments.includes(p.Segment)) {
         grp.segments.push(p.Segment);
       }
+    }
+    // A flavor's products can span multiple pack sizes (e.g. Small Pack,
+    // Big Pack, Family Pack). Picking gifImageURL/zipperGifImageURL only
+    // from whichever product happened to be first in the API response (the
+    // previous behaviour) silently dropped a pack size's own gif whenever
+    // it wasn't that first product — e.g. Small Pack's gif got lost
+    // whenever a Big/Family Pack product led the array. Search every
+    // product in the group for these two fields instead.
+    for (const grp of groupMap.values()) {
+      grp.gifImageURL = grp.products.find((p) => p.gifImageURL)?.gifImageURL;
+      grp.zipperGifImageURL = grp.products.find(
+        (p) => p.zipperGifImageURL,
+      )?.zipperGifImageURL;
+      grp.isVideo = !!(grp.gifImageURL || grp.zipperGifImageURL);
     }
     this.allGroups = Array.from(groupMap.values()).sort(
       (a, b) => a.flavourSequence - b.flavourSequence,

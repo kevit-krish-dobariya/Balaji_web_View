@@ -1,17 +1,18 @@
 <div class="product-card" [class.card-focused]="cardFocused">
-  <div class="product-image">
+  <div
+    class="product-image"
+    (click)="onImageInteraction()"
+    (mouseenter)="onImageInteraction()"
+  >
     <video
       *ngIf="group.isVideo && videoInView"
       #videoEl
       [src]="orderService.getGroupImage(group)"
       muted
+      [muted]="true"
       playsinline
       preload="metadata"
-      (timeupdate)="
-        !playingFromMid &&
-          videoEl.currentTime >= videoEl.duration / 2 &&
-          videoEl.pause()
-      "
+      (timeupdate)="onVideoTimeUpdate()"
       (ended)="onVideoEnded()"
     ></video>
     <span class="segment-badge">{{ group.flavorEn }}</span>
